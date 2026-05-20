@@ -4,9 +4,14 @@ import java.util.Map;
 public class Graph {
     public int [][] matrix;
     public int[][] floydMatrix;
+    public int[][] next;
     Map<String, Integer> vertexs = new HashMap<>();
 
     public Graph(){   
+    }
+
+    public Map<String, Integer> getVertexs() {
+        return vertexs;
     }
 
     public void addVertex(String name){
@@ -14,7 +19,7 @@ public class Graph {
         int [][] aux = matrix;
         if (matrix == null) {
                 matrix = new int [1][1];
-                matrix[0][0] = -1;
+                matrix[0][0] = 0;
         }
         else {
         matrix = new int [aux.length + 1][aux.length + 1];
@@ -25,7 +30,7 @@ public class Graph {
             }
             matrix[i][aux.length] = -1;
             matrix[aux.length][i] = -1;
-            matrix[aux.length][aux.length] = -1;
+            matrix[aux.length][aux.length] = 0;
             }
         }
         floyd();
@@ -65,15 +70,21 @@ public class Graph {
     public int[][] floyd(){
         int vertexs = matrix.length;
         int[][] edge_dist = new int[vertexs][vertexs];
+        next = new int[vertexs][vertexs];
 
         for (int i = 0; i < vertexs; i++) {
             for (int j = 0; j < vertexs; j++) {
                 edge_dist[i][j] = matrix[i][j];
                 if (i == j) {
                     edge_dist[i][j] = 0;
+                    next[i][j] = j;
                 }
-                if (edge_dist[i][j] == -1 && i != j) {
+                else if (edge_dist[i][j] != -1) {
+                next[i][j] = j;
+                }
+                else {
                     edge_dist[i][j] = 999999;
+                    next[i][j] = j;
                 }
             }
         }
@@ -81,14 +92,24 @@ public class Graph {
         for (int i = 0; i < vertexs; i++) {
             for (int j = 0; j < vertexs; j++) {
                 for (int k = 0; k < vertexs; k++) {
-                    if (edge_dist[k][i] + edge_dist[i][j] < edge_dist[k][j]) {
-                        edge_dist[k][j] = edge_dist[k][i] + edge_dist[i][j];
+                    if (edge_dist[j][i] + edge_dist[i][k] < edge_dist[j][k]) {
+                        edge_dist[j][k] = edge_dist[j][i] + edge_dist[i][k];
+                        next[j][k] = next[j][i];
                     }
                 }
             }
         }
         floydMatrix = edge_dist;
         return edge_dist;
+    }
+
+    public String getVertexName(int index){
+        for (String vertex : vertexs.keySet()) {
+            if (vertexs.get(vertex) == index) {
+                return vertex;
+            }
+        }
+        return null;
     }
 
     public void printGraph(){
@@ -105,15 +126,19 @@ public class Graph {
         }
     }
 
-    public void printVertexs(){
+    public String printVertexs(int index){
         if (matrix != null) {
             for (String vertex : vertexs.keySet()) {
-            System.out.println(vertex);
+
+            if (vertexs.get(vertex) == index) {
+                return vertex;
             }
+        }
         }
         else {
             System.out.println("El grafo está vacío");
         }
+        return null;
     }
 
       public void printFloyd(int[][] dist){
@@ -130,4 +155,40 @@ public class Graph {
         }
     }
     
+    public String graphCenter(){
+        int vertexs = floydMatrix.length;
+        int center = -1;
+        int minEccentricity = 999999;
+
+        for (int i = 0; i < vertexs; i++) {
+            int maxDistance = 0;
+            for (int j = 0; j < vertexs; j++) {
+                if (floydMatrix[i][j] == 999999) {
+                    maxDistance = 999999;
+                    break;
+                }
+                if (floydMatrix[i][j] > maxDistance) {
+                    maxDistance = floydMatrix[i][j];
+                }
+            }
+            if (maxDistance < minEccentricity) {
+                minEccentricity = maxDistance;
+                center = i;
+            }
+        }
+        return getVertexName(center);
+    }
+
+    public void printPath(int origin, int destination){
+        if (next[origin][destination] == -1) {
+            System.out.println("No existe ruta");
+            return;
+        }
+        System.out.print(getVertexName(origin));
+        while (origin != destination) {
+            origin = next[origin][destination];
+            System.out.print(" -> " + getVertexName(origin));
+        }
+        System.out.println();
+    }
 }
